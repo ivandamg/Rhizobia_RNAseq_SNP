@@ -14,7 +14,7 @@ Pipeline for SNP identification from RNAseq reads
 2. compress files
 
 
-      for FILE in $(ls *.fastq); do echo $FILE;sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)GZIP --time=0-03:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/02_Ecotype_Dongbei/01_RawData ; gzip $FILE;"; done
+      for FILE in $(ls *.fastq); do echo $FILE ;sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)GZIP --time=0-03:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/02_Ecotype_Dongbei/01_RawData ; gzip $FILE;"; done
 
 3. Change names
 
@@ -31,7 +31,7 @@ Pipeline for SNP identification from RNAseq reads
 
 
                      
-     for FILE in $(ls *1.fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f6)fastp --time=0-02:00:00 --mem-per-cpu=64G --ntasks=4 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f6)_fastp.out --error=$(echo $FILE | cut -d'_' -f6)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/01_Ecotype_Gansu/01_RawData; module load FastQC; ~/00_Software/fastp --in1 $FILE --in2 $(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2.fastq.gz --out1 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz --out2 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz -h ../02_TrimmedData/$(echo $FILE | cut -d'.' -f1)_fastp.html --thread 4; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz"; sleep  1; done
+           for FILE in $(ls *1.fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f6)fastp --time=0-02:00:00 --mem-per-cpu=64G --ntasks=4 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f6)_fastp.out --error=$(echo $FILE | cut -d'_' -f6)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData; module load FastQC; ~/00_Software/fastp --in1 $FILE --in2 $(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2.fastq.gz --out1 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz --out2 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz -h ../02_TrimmedData/$(echo $FILE | cut -d'.' -f1)_fastp.html --thread 4; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz"; sleep  1; done
 
   
   
