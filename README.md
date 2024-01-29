@@ -2,6 +2,7 @@
 
 Pipeline for SNP identification from RNAseq reads
 
+
 0. Download and prepare files
 
 
