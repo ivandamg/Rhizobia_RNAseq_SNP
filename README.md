@@ -1,6 +1,9 @@
 # Rhizobia_RNAseq_SNP
+
 Pipeline for SNP identification from RNAseq reads
+
 0. Download and prepare files
+1. 
       module load SRA-Toolkit
       prefetch SRR27534840
       fasterq-dump --split-files SRR27534843
@@ -14,15 +17,13 @@ Pipeline for SNP identification from RNAseq reads
       mv SRR27534826_2.fastq.gz Gansu_Rhizobia_root_Control_Rep1_R-7-1_2.fastq.gz
     
     
-1. Trimming and quality filter with Fastp
+2. Trimming and quality filter with Fastp
 
 
-                     for FILE in $(ls *_L*_R1_fastq.gz); do echo $FILE; sbatch --partition=pall --job-name=$(echo $FILE | cut -d'_' -f1,3)fastp --time=0-01:00:00 --mem-per-cpu=64G --ntasks=8 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,3)_fastp.out --error=$(echo $FILE | cut -d'_' -f1,3)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/01_beforeTrim; ~/00_Software/fastp -i $FILE -I $(echo $FILE | cut -d'_' -f1,2)_R2_fastq.gz -o /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/02_WithUMI/$(echo $FILE | cut -d'_' -f1,2,3)_UMI_fastq.gz -O /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/02_WithUMI/$(echo $FILE | cut -d'_' -f1,2)_tmp.gz --umi --umi_loc=read2 --umi_len=11 -Q -A -L -w 1 -u 100 -n 11 -Y 100 -G --umi_prefix UMI "; sleep  1; done
-   fastp --in1 wgs.R1.fastq.gz --in2 wgs.R2.fastq.gz --out1 wgs.R1.trimmed.fastq.gz --out2 wgs.R2.trimmed.fastq.gz -l 50 -h wgs.html &> wgs.log
+                     
+     for FILE in $(ls *1.fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f6)fastp --time=0-02:00:00 --mem-per-cpu=64G --ntasks=4 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f6)_fastp.out --error=$(echo $FILE | cut -d'_' -f6)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/01_Ecotype_Gansu/01_RawData; module load FastQC; ~/00_Software/fastp --in1 $FILE --in2 $(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2.fastq.gz --out1 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz --out2 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz -h ../02_TrimmedData/$(echo $FILE | cut -d'.' -f1)_fastp.html --thread 4; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz"; sleep  1; done
 
-     for FILE in $(ls *1.fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,3)fastp --time=0-01:00:00 --mem-per-cpu=64G --ntasks=4 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,3)_fastp.out --error=$(echo $FILE | cut -d'_' -f1,3)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/01_Ecotype_Gansu/01_RawData;module add UHTS/Quality_control/fastqc/0.11.9; ~/00_Software/fastp -i $FILE -I $(echo $FILE | cut -d'_' -f1,2)_R2_fastq.gz -o ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz -O ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz -h ../02_TrimmedData/$(echo $FILE | cut -d'.' -f1)_fastp.html --thread 4; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz"; sleep  1; done
-
-   -i $FILE -I $(echo $FILE | cut -d'_' -f1,2)_R2_fastq.gz -o /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/02_WithUMI/$(echo $FILE | cut -d'_' -f1,2,3)_UMI_fastq.gz -O /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/02_WithUMI/$(echo $FILE | cut -d'_' -f1,2)_tmp.gz --umi --umi_loc=read2 --umi_len=11 -Q -A -L -w 1 -u 100 -n 11 -Y 100 -G --umi_prefix UMI "; sleep  1; done
+  
   
 3.  Map reads with bbmap
 
