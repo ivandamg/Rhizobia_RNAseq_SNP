@@ -7,9 +7,15 @@ Pipeline for SNP identification from RNAseq reads
       module load SRA-Toolkit
       prefetch SRR27534840
       fasterq-dump --split-files SRR27534843
-      # compress files
-      for FILE in $(ls *.fastq); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)GZIP --time=0-03:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/02_Ecotype_Dongbei/01_RawData ; gzip $FILE;"; done
-      
+
+
+2. compress files
+
+      for FILE in $(ls *.fastq); do echo $FILE;sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)GZIP --time=0-03:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/02_Ecotype_Dongbei/01_RawData ; gzip $FILE;"; done
+
+3. Change names
+
+   
       mv SRR27534822_2.fastq.gz Gansu_Rhizobia_root_Hgexpose_Rep2_R-8-2_2.fastq.gz
       mv SRR27534823_2.fastq.gz Gansu_Rhizobia_root_Hgexpose_Rep1_R-8-1_2.fastq.gz
       mv SRR27534824_2.fastq.gz Gansu_Rhizobia_root_Control_Rep3_R-7-3_2.fastq.gz
@@ -17,7 +23,7 @@ Pipeline for SNP identification from RNAseq reads
       mv SRR27534826_2.fastq.gz Gansu_Rhizobia_root_Control_Rep1_R-7-1_2.fastq.gz
     
     
-2. Trimming and quality filter with Fastp
+5. Trimming and quality filter with Fastp
 
 
                      
@@ -25,7 +31,7 @@ Pipeline for SNP identification from RNAseq reads
 
   
   
-3.  Map reads with bbmap
+6.  Map reads with bbmap
 
 
         Sinteractive -c 16 -m 128G -t 02:00:00
@@ -37,7 +43,7 @@ Pipeline for SNP identification from RNAseq reads
         for i in $(ls Unmapped_Mesculenta_*.1.fq); do echo $i; bbmap.sh in1=$i in2=$(echo $i | cut -d'.' -f1).2.fq out=$(echo $i | cut -d'.' -f1)_mapped_MergedDAOM197198B1.sam ref=../../00_GenomeAssemblies/Merged_DAOM197198_B1.fna vslow k=8 maxindel=200 minratio=0.1 ; done
 
 
-4. transform to bam sort and Qfilter
+7. transform to bam sort and Qfilter
             
             module load gcc samtools
             samtools sort -m4G -@4 -o Z17Hifireads_RefSuperZ17p_sorted.bam Z17Hifireads_RefSuperZ17p.sam
@@ -45,7 +51,7 @@ Pipeline for SNP identification from RNAseq reads
             samtools index Z17Hifireads_RefSuperZ17p_sorted.bam
 
 
-5. FeatureCounts on chimer.
+8. FeatureCounts on chimer.
 
 1. merge GTF file of both isolates.
 
