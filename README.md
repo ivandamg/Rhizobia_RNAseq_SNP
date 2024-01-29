@@ -3,7 +3,8 @@
 Pipeline for SNP identification from RNAseq reads
 
 0. Download and prepare files
-1. 
+
+
       module load SRA-Toolkit
       prefetch SRR27534840
       fasterq-dump --split-files SRR27534843
@@ -11,11 +12,13 @@ Pipeline for SNP identification from RNAseq reads
 
 2. compress files
 
+
       for FILE in $(ls *.fastq); do echo $FILE;sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)GZIP --time=0-03:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/02_Ecotype_Dongbei/01_RawData ; gzip $FILE;"; done
 
 3. Change names
 
-   
+
+
       mv SRR27534822_2.fastq.gz Gansu_Rhizobia_root_Hgexpose_Rep2_R-8-2_2.fastq.gz
       mv SRR27534823_2.fastq.gz Gansu_Rhizobia_root_Hgexpose_Rep1_R-8-1_2.fastq.gz
       mv SRR27534824_2.fastq.gz Gansu_Rhizobia_root_Control_Rep3_R-7-3_2.fastq.gz
