@@ -31,9 +31,26 @@ Pipeline for SNP identification from RNAseq reads
 
 
                      
-           for FILE in $(ls *1.fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f6)fastp --time=0-02:00:00 --mem-per-cpu=64G --ntasks=4 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f6)_fastp.out --error=$(echo $FILE | cut -d'_' -f6)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData; module load FastQC; ~/00_Software/fastp --in1 $FILE --in2 $(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2.fastq.gz --out1 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz --out2 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz -h ../02_TrimmedData/$(echo $FILE | cut -d'.' -f1)_fastp.html --thread 4; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_1_trimmed.fastq.gz; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3,4,5,6)_2_trimmed.fastq.gz"; sleep  1; done
+           for FILE in $(ls *1.fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)fastp --time=0-01:00:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_fastp.out --error=$(echo $FILE | cut -d'_' -f1,2)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData; module load FastQC; ~/00_Software/fastp --in1 $FILE --in2 $(echo $FILE | cut -d'_' -f1,2)_2.fastq.gz --out1 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_1_trimmed.fastq.gz --out2 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_2_trimmed.fastq.gz -h ../02_TrimmedData/$(echo $FILE | cut -d'.' -f1)_fastp.html --thread 4; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_1_trimmed.fastq.gz; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_2_trimmed.fastq.gz"; sleep  1; done
 
-  
+
+# 3. Mapping to Fcasuarinae
+
+Index reference 
+
+              sbatch --partition=pall --job-name=$(echo $FILE | cut -d'_' -f1,2)Pi --time=0-10:30:00 --mem-per-cpu=12G --ntasks=2 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "/data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/02_TrimmedData ; /home/imateusgonzalez/00_Software/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index  Medicago_truncatula.fa "
+
+
+
+Map to reference genome
+
+          for FILE in $(ls *_L*_R1_UMI_fastq.gz); do echo $FILE; sbatch --partition=pall --job-name=$(echo $FILE | cut -d'_' -f1,2)_bw --time=0-05:00:00 --mem-per-cpu=64G --ntasks=8 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_bwa-mem2.out --error=$(echo $FILE | cut -d'_' -f1,2)_bwa-mem2.error --mail-type=END,FAIL --wrap "module load UHTS/Analysis/samtools/1.10; cd /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/02_WithUMI/; /home/imateusgonzalez/00_Software/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -t 8 /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/03_Mapped_Medicago/Medicago_truncatula.fa $FILE $(echo $FILE | cut -d'_' -f1,2)_R3_UMI_fastq.gz > $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.sam; samtools view -bS $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.sam > $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.bam; mv $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.bam /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/03_Mapped_Medicago/ ;  rm $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.sam "; sleep  1; done
+
+Sorting and indexing
+
+            for FILE in $(ls *_L*_bwa-mem2_Medicago.bam); do echo $FILE; sbatch --partition=pall --job-name=$(echo $FILE | cut -d'_' -f1,2)ST --time=0-03:00:00 --mem-per-cpu=64G --ntasks=2 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_ST.out --error=$(echo $FILE | cut -d'_' -f1,2)_ST.error --mail-type=END,FAIL --wrap "module load UHTS/Analysis/samtools/1.10; cd /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/03_Mapped_Medicago/; samtools sort $FILE -o $(echo $FILE | cut -d'.' -f1)_Sorted.bam; samtools index $(echo $FILE | cut -d'.' -f1)_Sorted.bam; "; sleep 1; done
+
+
   
 6.  Map reads with bbmap
 
