@@ -3,7 +3,7 @@
 Pipeline for SNP identification from RNAseq reads
 
 
-0. Download and prepare files
+## 0. Download and prepare files
 
 
       module load SRA-Toolkit
@@ -11,12 +11,12 @@ Pipeline for SNP identification from RNAseq reads
       fasterq-dump --split-files SRR27534843
 
 
-2. compress files
+## 1. compress files
 
 
       for FILE in $(ls *.fastq); do echo $FILE ;sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)GZIP --time=0-03:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/02_Ecotype_Dongbei/01_RawData ; gzip $FILE;"; done
 
-3. Change names
+## 2. Change names
 
 
 
@@ -27,26 +27,26 @@ Pipeline for SNP identification from RNAseq reads
       mv SRR27534826_2.fastq.gz Gansu_Rhizobia_root_Control_Rep1_R-7-1_2.fastq.gz
     
     
-5. Trimming and quality filter with Fastp
+## 3. Trimming and quality filter with Fastp
 
 
                      
            for FILE in $(ls *1.fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)fastp --time=0-01:00:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_fastp.out --error=$(echo $FILE | cut -d'_' -f1,2)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData; module load FastQC; ~/00_Software/fastp --in1 $FILE --in2 $(echo $FILE | cut -d'_' -f1,2)_2.fastq.gz --out1 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_1_trimmed.fastq.gz --out2 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_2_trimmed.fastq.gz -h ../02_TrimmedData/$(echo $FILE | cut -d'.' -f1)_fastp.html --thread 4; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_1_trimmed.fastq.gz; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_2_trimmed.fastq.gz"; sleep  1; done
 
 
-# 3. Mapping to Fcasuarinae with STAR https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
+# 4. Mapping to Fcasuarinae with STAR https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
-Index reference 
+### a. Index reference 
 
                   sbatch --partition=pshort_el8 --job-name=StarIndex --time=0-01:00:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=StarIndex.out --error=StarIndex.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData/ncbi_dataset/data/GCF_000013345/; module load STAR/2.7.10a_alpha_220601-GCC-10.3.0; STAR --runThreadN 1 --runMode genomeGenerate --genomeDir /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData/ncbi_dataset/data/GCF_000013345 --genomeFastaFiles GCF_000013345.1_ASM1334v1_genomic.fna --sjdbGTFfile genomic.gtf --sjdbOverhang 99 --genomeSAindexNbases 10"
 
-Map reads 
+### b. Map reads 
 
                   for FILE in $(ls *_1_trimmed.fastq.gz ); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)_STAR --time=0-06:00:00 --mem-per-cpu=64G --ntasks=8 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_STAR.out --error=$(echo $FILE | cut -d'_' -f1,2)_STAR.error --mail-type=END,FAIL --wrap "module load STAR/2.7.10a_alpha_220601-GCC-10.3.0; cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/02_TrimmedData; STAR --runThreadN 8 --genomeDir /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData/ncbi_dataset/data/GCF_000013345 --readFilesIn $FILE $(echo $FILE | cut -d'_' -f1,2)_2_trimmed.fastq.gz --readFilesCommand zcat --outFileNamePrefix ../03_$(echo $FILE | cut -d'_' -f1,2)_Mapped --outSAMtype BAM SortedByCoordinate"; sleep  1; done
 
-Map to reference genome
+# 5. Call snps
 
-          for FILE in $(ls *_L*_R1_UMI_fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)_bw --time=0-05:00:00 --mem-per-cpu=64G --ntasks=8 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_bwa-mem2.out --error=$(echo $FILE | cut -d'_' -f1,2)_bwa-mem2.error --mail-type=END,FAIL --wrap "module load UHTS/Analysis/samtools/1.10; cd /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/02_WithUMI/; /home/imateusgonzalez/00_Software/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -t 8 /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/03_Mapped_Medicago/Medicago_truncatula.fa $FILE $(echo $FILE | cut -d'_' -f1,2)_R3_UMI_fastq.gz > $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.sam; samtools view -bS $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.sam > $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.bam; mv $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.bam /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/03_Mapped_Medicago/ ;  rm $(echo $FILE | cut -d'_' -f1,2)_bwa-mem2_Medicago.sam "; sleep  1; done
+                for FILE in $(ls *deduplicated.bam); do echo $FILE; sbatch --partition=pall --job-name=$(echo $FILE | cut -d'_' -f1,2)ST2 --time=0-03:00:00 --mem-per-cpu=64G --ntasks=8 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_ST.out --error=$(echo $FILE | cut -d'_' -f1,2)_FB.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/04_Mapped_Rhizobia/; module load SAMtools; module load BCFtools; bcftools mpileup --threads 8 -a AD,DP,SP -f /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData/ncbi_dataset/data/GCF_000013345/GCF_000013345.1_ASM1334v1_genomic.fna $FILE | bcftools call --threads 8 -mv -Ov -o $(echo $FILE | cut -d'_' -f1,2).vcf; bcftools view --threads 8 --exclude 'QUAL <= 30 ' $(echo $FILE | cut -d'_' -f1,2).vcf -Oz -o $(echo $FILE | cut -d'_' -f1,2)_bcftoolsV1_Q30.vcf.gz"   ; sleep 1; done
 
 Sorting and indexing
 
