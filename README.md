@@ -10,11 +10,17 @@ Pipeline for SNP identification from RNAseq reads
       prefetch SRR27534840
       fasterq-dump --split-files SRR27534843
 
+      sbatch --partition=pshort_el8 --job-name=SRA --time=0-05:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/02_PublishedData/01_RawData; module load SRA-Toolkit; prefetch SRX2582554;  prefetch SRX2582555;  prefetch SRX2582556;  prefetch SRX2582557;  prefetch SRX2582558;  prefetch SRX2582559;  "
+ 
+sbatch --partition=pshort_el8 --job-name=SRA2 --time=0-05:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/02_PublishedData/01_RawData; module load SRA-Toolkit; fasterq-dump --split-files SRR5278714;fasterq-dump --split-files SRR5278715;fasterq-dump --split-files SRR5278716;fasterq-dump --split-files SRR5278717;fasterq-dump --split-files SRR5278718;fasterq-dump --split-files SRR5278719;fasterq-dump --split-files SRR5278720;fasterq-dump --split-files SRR5278721;fasterq-dump --split-files SRR5278722;fasterq-dump --split-files SRR5278723;fasterq-dump --split-files SRR5278724;fasterq-dump --split-files SRR5278725"
+ 
+
+
 
 ## 1. compress files
 
 
-      for FILE in $(ls *.fastq); do echo $FILE ;sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)GZIP --time=0-03:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Hg_PRJNA1063170/02_Ecotype_Dongbei/01_RawData ; gzip $FILE;"; done
+      for FILE in $(ls *.fastq); do echo $FILE ;sbatch --partition=pshort_el8 --job-name=GZIP --time=0-03:30:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=index.out --error=index.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/02_PublishedData/01_RawData ; gzip $FILE;"; done
 
 ## 2. Change names
 
@@ -31,7 +37,8 @@ Pipeline for SNP identification from RNAseq reads
 
 
                      
-           for FILE in $(ls *1.fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)fastp --time=0-01:00:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_fastp.out --error=$(echo $FILE | cut -d'_' -f1,2)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData; module load FastQC; ~/00_Software/fastp --in1 $FILE --in2 $(echo $FILE | cut -d'_' -f1,2)_2.fastq.gz --out1 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_1_trimmed.fastq.gz --out2 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_2_trimmed.fastq.gz -h ../02_TrimmedData/$(echo $FILE | cut -d'.' -f1)_fastp.html --thread 4; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_1_trimmed.fastq.gz; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2)_2_trimmed.fastq.gz"; sleep  1; done
+           for FILE in $(ls *1.fastq.gz); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2,3)fastp --time=0-01:00:00 --mem-per-cpu=12G --ntasks=1 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2,3)_fastp.out --error=$(echo $FILE | cut -d'_' -f1,2,3)_fastp.error --mail-type=END,FAIL --wrap " cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/02_PublishedData/01_RawData; module load FastQC; ~/00_Software/fastp --in1 $FILE --in2 $(echo $FILE | cut -d'_' -f1,2,3,4)_2.fastq.gz --out1 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3)_1_trimmed.fastq.gz --out2 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3)_2_trimmed.fastq.gz -h ../02_TrimmedData/$(echo $FILE | cut -d',' -f1,2,3)_fastp.html --thread 4; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3)_1_trimmed.fastq.gz; fastqc -t 4 ../02_TrimmedData/$(echo $FILE | cut -d'_' -f1,2,3)_2_trimmed.fastq.gz"; sleep  1; done
+
 
 
 # 4. Mapping to Fcasuarinae with STAR https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
@@ -42,11 +49,27 @@ Pipeline for SNP identification from RNAseq reads
 
 ### b. Map reads 
 
-                  for FILE in $(ls *_1_trimmed.fastq.gz ); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2)_STAR --time=0-06:00:00 --mem-per-cpu=64G --ntasks=8 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_STAR.out --error=$(echo $FILE | cut -d'_' -f1,2)_STAR.error --mail-type=END,FAIL --wrap "module load STAR/2.7.10a_alpha_220601-GCC-10.3.0; cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/02_TrimmedData; STAR --runThreadN 8 --genomeDir /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData/ncbi_dataset/data/GCF_000013345 --readFilesIn $FILE $(echo $FILE | cut -d'_' -f1,2)_2_trimmed.fastq.gz --readFilesCommand zcat --outFileNamePrefix ../03_$(echo $FILE | cut -d'_' -f1,2)_Mapped --outSAMtype BAM SortedByCoordinate"; sleep  1; done
+                  for FILE in $(ls *_1_trimmed.fastq.gz ); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2,3)_STAR --time=0-06:00:00 --mem-per-cpu=128G --ntasks=8 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_STAR.out --error=$(echo $FILE | cut -d'_' -f1,2)_STAR.error --mail-type=END,FAIL --wrap "module load STAR/2.7.10a_alpha_220601-GCC-10.3.0; cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/02_PublishedData/02_TrimmedData; STAR --runThreadN 8 --genomeDir /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData/ncbi_dataset/data/GCF_000013345 --readFilesIn $FILE $(echo $FILE | cut -d'_' -f1,2,3)_2_trimmed.fastq.gz --readFilesCommand zcat --outFileNamePrefix ../$(echo $FILE | cut -d'_' -f1,2,3)_Mapped --outSAMtype BAM SortedByCoordinate --limitBAMsortRAM 1065539232"; sleep  1; done
 
 # 5. Call snps
 
-                for FILE in $(ls *deduplicated.bam); do echo $FILE; sbatch --partition=pall --job-name=$(echo $FILE | cut -d'_' -f1,2)ST2 --time=0-03:00:00 --mem-per-cpu=64G --ntasks=8 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2)_ST.out --error=$(echo $FILE | cut -d'_' -f1,2)_FB.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/02_DuplexSeq/04_Mapped_Rhizobia/; module load SAMtools; module load BCFtools; bcftools mpileup --threads 8 -a AD,DP,SP -f /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData/ncbi_dataset/data/GCF_000013345/GCF_000013345.1_ASM1334v1_genomic.fna $FILE | bcftools call --threads 8 -mv -Ov -o $(echo $FILE | cut -d'_' -f1,2).vcf; bcftools view --threads 8 --exclude 'QUAL <= 30 ' $(echo $FILE | cut -d'_' -f1,2).vcf -Oz -o $(echo $FILE | cut -d'_' -f1,2)_bcftoolsV1_Q30.vcf.gz"   ; sleep 1; done
+                for FILE in $(ls *_MappedAligned.sortedByCoord.out.bam); do echo $FILE; sbatch --partition=pshort_el8 --job-name=$(echo $FILE | cut -d'_' -f1,2,3)mpileup --time=0-03:00:00 --mem-per-cpu=64G --ntasks=8 --cpus-per-task=1 --output=$(echo $FILE | cut -d'_' -f1,2,3)_mpileup.out --error=$(echo $FILE | cut -d'_' -f1,2,3)_mpileup.error --mail-type=END,FAIL --wrap "cd /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/02_PublishedData/03_Mapped; module load SAMtools ; module load BCFtools; bcftools mpileup --threads 8 -a AD,DP,SP -f /data/projects/p495_SinorhizobiumMeliloti/08_OtherRNAseqs/01_Fcasuarinae/01_RawData/ncbi_dataset/data/GCF_000013345/GCF_000013345.1_ASM1334v1_genomic.fna $FILE | bcftools call --threads 8 -mv -Ov -o $(echo $FILE | cut -d'_' -f1,2,3).vcf; bcftools view --threads 8 --exclude 'QUAL <= 30 ' $(echo $FILE | cut -d'_' -f1,2,3).vcf -Oz -o $(echo $FILE | cut -d'_' -f1,2,3)_bcftoolsV1_Q30.vcf.gz"   ; sleep 1; done
+
+
+
+
+
+
+
+
+
+
+######
+
+# END
+
+
+
 
 Sorting and indexing
 
